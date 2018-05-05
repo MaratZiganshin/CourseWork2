@@ -4,8 +4,7 @@ import copy
 import win32api
 import math
 import win32con
-from directkeys import PressKey, ReleaseKey, UP, DOWN
-
+import matplotlib.pyplot as plt
 
 def calculateFingers(res,drawing):  # -> finished bool, cnt: finger count
     #  convexity defect
@@ -30,14 +29,20 @@ def calculateFingers(res,drawing):  # -> finished bool, cnt: finger count
             return True, cnt
     return False, 0
 
+def get_frame():
+    ret, frame = camera.read()
+    return frame
+
 camera = cv2.VideoCapture(1)
 camera.set(10,200)
 bgModel = cv2.createBackgroundSubtractorMOG2(0, 50)
-
-up = False
-down = False
-center = True
 enabled = False
+refresh = False
+x = 0
+y = 0
+x0 = 0
+x0 = 0
+
 while 1:
     ret, frame = camera.read()
 
@@ -90,16 +95,26 @@ while 1:
         isFinishCal, cnt = calculateFingers(res, drawing)
         cv2.imshow('output', drawing)
         #print (min)
+
+        if refresh:
+            refresh = not refresh
+            x0 = x - 2*minpoint[0]
+            y0 = y - 2*minpoint[1]
+
         if (enabled and cnt < 3):
-            win32api.SetCursorPos((2*minpoint[0], 2*minpoint[1]))
+            x = 2*minpoint[0] + x0
+            y = 2*minpoint[1] + y0
+            win32api.SetCursorPos((x, y))
 
-            if (cnt == 1):
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 4*minpoint[0], 4*minpoint[1], 0, 0)
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 4*minpoint[0], 4*minpoint[1], 0, 0)
-
+            #if (cnt == 1):
+            #    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 4*minpoint[0], 4*minpoint[1], 0, 0)
+            #    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 4*minpoint[0], 4*minpoint[1], 0, 0)
+        if cnt >=3:
+            refresh = True
 
     k = cv2.waitKey(10)
     if k == ord('b'):
         bgModel = cv2.createBackgroundSubtractorMOG2(0, 50)
     if k == ord('e'):
         enabled = not enabled
+
